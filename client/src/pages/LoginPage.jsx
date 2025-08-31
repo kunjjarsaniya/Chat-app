@@ -18,9 +18,27 @@ const LoginPage = () => {
   const onSubmitHandler = (event) => {
     event.preventDefault();
 
-    if(currState === "Sign up" && !isDataSubmitted) {
-      setIsDataSubmitted(true);
-      return;
+    if (currState === "Sign up") {
+      if (!isDataSubmitted) {
+        // First step: Validate email and password
+        if (!email || !password) {
+          alert('Please fill in all required fields');
+          return;
+        }
+        setIsDataSubmitted(true);
+        return;
+      }
+      // Second step: Validate bio and submit
+      if (!bio.trim()) {
+        alert('Please provide a bio');
+        return;
+      }
+    } else {
+      // Login validation
+      if (!email || !password) {
+        alert('Please fill in all fields');
+        return;
+      }
     }
 
     login(currState === "Sign up" ? 'signup' : 'login', { fullName, email, password, bio });

@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const Message = require("../models/Message");
 const cloudinary = require("cloudinary").v2;
-const { io, userSocketMap } = require("../socket/socketServer");
+const { userSocketMap, getIO } = require("../socket/socketServer");
 
 // Get all users except the logged in user
 const getUserForSidebar = async (req, res) => {
@@ -109,13 +109,53 @@ const markMessageAsSeen = async (req, res) => {
 // Send message to selected user
 const sendMessage = async (req, res) => {
     try {
-        console.log('Sending message with body:', req.body);
-        console.log('Request params:', req.params);
+        console.log('=== SEND MESSAGE REQUEST ===');
+        console.log('Headers:', req.headers);
+        console.log('Body:', req.body);
+        console.log('Params:', req.params);
         console.log('User:', req.user);
         
-        const { text, image } = req.body;
+        const { text, image } = req.body || {};
         const senderId = req.user?._id;
         const receiverId = req.params?.id;
+        
+        console.log('Extracted values:', { 
+            text, 
+            hasImage: !!image, 
+            senderId, 
+            receiverId 
+        });
+        
+        if (!senderId) {
+            console.error('No sender ID in request user:', req.user);
+            return res.status(400).json({
+                success: false,
+                message: 'User not authenticated or invalid user data'
+            });
+        }
+        
+        // Check if receiver exists
+        try {
+            const receiver = await User.findById(receiverId);
+            if (!receiver) {
+                console.error('Receiver not found with ID:', receiverId);
+                return res.status(404).json({
+                    success: false,
+                    message: 'Recipient not found'
+                });
+            }
+        } catch (dbError) {
+            console.error('Database error when checking receiver:', dbError);
+            throw dbError;
+        }
+        
+        if (!receiverId) {
+            console.error('No receiver ID in request params:', req.params);
+            return res.status(400).json({
+                success: false,
+                message: 'No recipient specified'
+            });
+        }
 
         if (!senderId || !receiverId) {
             console.error('Missing sender or receiver ID:', { senderId, receiverId });
@@ -175,9 +215,31 @@ const sendMessage = async (req, res) => {
         }
 
         // Emit the new message to the receiver's socket
-        const receiverSocketId = userSocketMap[receiverId];
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
+        try {
+            const io = getIO();
+            const receiverSocketId = userSocketMap[receiverId];
+            const senderSocketId = userSocketMap[newMessage.senderId._id || newMessage.senderId];
+            
+            if (receiverSocketId) {
+                console.log('Emitting newMessage to receiver socket:', receiverSocketId);
+                io.to(receiverSocketId).emit("newMessage", newMessage);
+            }
+            
+            // Also emit to sender for UI update if different from receiver
+            if (senderSocketId && senderSocketId !== receiverSocketId) {
+                console.log('Emitting newMessage to sender socket:', senderSocketId);
+                io.to(senderSocketId).emit("newMessage", newMessage);
+            }
+            
+            if (!receiverSocketId && !senderSocketId) {
+                console.log('No active sockets found for message delivery:', { 
+                    receiverId,
+                    senderId: newMessage.senderId._id || newMessage.senderId
+                });
+            }
+        } catch (socketError) {
+            console.error('Error in socket emission:', socketError);
+            // Don't fail the request if socket emission fails
         }
 
         res.status(201).json({ 
