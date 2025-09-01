@@ -38,7 +38,7 @@ app.use(express.json({ limit: "4mb" }));
 app.use(cors());
 
 // Serve static files
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Routes setup
 app.use("/api/status", (req, res) => res.send("Server is live"));
@@ -56,7 +56,7 @@ connectToDB();
 
 // fallback route for SPA
 app.get("/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });  
 
 // ✅ Start server properly (must use server.listen, not app.listen)
