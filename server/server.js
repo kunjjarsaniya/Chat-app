@@ -6,8 +6,7 @@ const { connectToDB } = require("./lib/db");
 const userRouter = require("./routes/userRoutes");
 const messageRouter = require("./routes/messageRoutes");
 
-
-
+const path = require("path");
 
 // load environment variables
 dotenv.config();
@@ -40,6 +39,9 @@ setupSocketServer(io);
 app.use(express.json({limit: "4mb"}));
 app.use(cors());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, "../public")));
+
 // Routes setup
 app.use("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", userRouter);
@@ -53,6 +55,11 @@ app.use((err, req, res, next) => {
 
 // connect to database
 connectToDB();
+
+// 
+app.get("*name", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/index.html"));
+})
 
 // Start server
 const PORT = process.env.PORT || 3000;
