@@ -41,9 +41,9 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Routes setup
-app.use("/api/status", (req, res) => res.send("Server is live"));
-app.use("/api/auth", userRouter);
-app.use("/api/messages", messageRouter);
+app.use(`${process.env.VITE_BACKEND_URL}/api/status`, (req, res) => res.send("Server is live"));
+app.use(`${process.env.VITE_BACKEND_URL}/api/auth`, userRouter);
+app.use(`${process.env.VITE_BACKEND_URL}/api/messages`, messageRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -55,7 +55,7 @@ app.use((err, req, res, next) => {
 connectToDB();
 
 // fallback route for SPA
-app.get("/*", (req, res) => {
+app.get(`${process.env.VITE_BACKEND_URL}/*`, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });  
 
