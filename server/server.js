@@ -55,9 +55,9 @@ app.use((err, req, res, next) => {
 connectToDB();
 
 // fallback route for SPA
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
+app.get("/*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/index.html"));
+});  
 
 // ✅ Start server properly (must use server.listen, not app.listen)
 const PORT = process.env.PORT || 10000;
