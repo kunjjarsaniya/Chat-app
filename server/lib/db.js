@@ -10,8 +10,8 @@ const connectToDB = async () => {
         });
         
         await mongoose.connect(`${process.env.MONGO_URI}/ChatApp`, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            // useNewUrlParser: true,
+            // useUnifiedTopology: true,
         });
     }catch(error){
         console.log("Database connection error", error);
