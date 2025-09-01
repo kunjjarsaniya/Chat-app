@@ -61,8 +61,17 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 })
 
-// Start server
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// // Start server
+// server.listen(PORT, () => {
+//     console.log(`Server is running on port ${PORT}`);
+// });
+
+const PORT = process.env.PORT || 10000; // 👈 Render sets process.env.PORT automatically
+
+app.get("/", (req, res) => {
+  res.send("Hello from Render!");
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server is running on port ${PORT}`);
 });
