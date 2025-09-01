@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const http = require("http");
-const path = require("path");
 
 const { connectToDB } = require("./lib/db");
 const userRouter = require("./routes/userRoutes");
@@ -37,13 +36,11 @@ cloudinary.config({
 app.use(express.json({ limit: "4mb" }));
 app.use(cors());
 
-// Serve static files
-app.use(express.static(path.join(__dirname, "public")));
 
 // Routes setup
-app.use(`${process.env.VITE_BACKEND_URL}/api/status`, (req, res) => res.send("Server is live"));
-app.use(`${process.env.VITE_BACKEND_URL}/api/auth`, userRouter);
-app.use(`${process.env.VITE_BACKEND_URL}/api/messages`, messageRouter);
+app.use("/api/status", (req, res) => res.send("Server is live"));
+app.use("/api/auth", userRouter);
+app.use("/api/messages", messageRouter);
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -54,14 +51,12 @@ app.use((err, req, res, next) => {
 // connect to database
 connectToDB();
 
-// fallback route for SPA
-app.get(`${process.env.VITE_BACKEND_URL}/*`, (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
-});  
+if(process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log("Server is running on port " + PORT);
+  });
+}
 
-// ✅ Start server properly (must use server.listen, not app.listen)
-const PORT = process.env.PORT || 10000;
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server is running on port ${PORT}`);
-});
+// export server for vercel
+export default server;
