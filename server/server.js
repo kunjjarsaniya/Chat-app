@@ -7,8 +7,6 @@ const userRouter = require("./routes/userRoutes");
 const messageRouter = require("./routes/messageRoutes");
 
 
-
-
 // load environment variables
 dotenv.config();
 
@@ -54,8 +52,15 @@ app.use((err, req, res, next) => {
 // connect to database
 connectToDB();
 
+
+
 // Start server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+if(process.env.NODE_ENV !== "production"){
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+// Export server for vercel
+export default server;
