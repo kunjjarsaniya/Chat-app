@@ -6,36 +6,14 @@ const { connectToDB } = require("./lib/db");
 const userRouter = require("./routes/userRoutes");
 const messageRouter = require("./routes/messageRoutes");
 
-
-// load environment variables
+// Load environment variables
 dotenv.config();
 
-// create Express app and http server
+// Create Express app
 const app = express();
-const server = http.createServer(app);
-
-// Pass 'server' (not 'app') to socket.io
-
-const io = require('socket.io')(server, {
-    cors: {
-        origin: '*',
-    }
-});
-
-// Setup socket server
-// Configure Cloudinary
-const cloudinary = require('cloudinary').v2;
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-const { setupSocketServer } = require('./socket/socketServer');
-setupSocketServer(io);
 
 // Middleware setup
-app.use(express.json({limit: "4mb"}));
+app.use(express.json({ limit: "4mb" }));
 app.use(cors());
 
 // Routes setup
@@ -49,17 +27,52 @@ app.use((err, req, res, next) => {
     res.status(500).send("Something broke!");
 });
 
-// connect to database
-connectToDB();
+// Initialize server and socket.io only in development
+let server;
+let io;
 
+// Connect to database and start server in development
+const startServer = async () => {
+    try {
+        await connectToDB();
+        
+        if (process.env.NODE_ENV !== "production") {
+            server = http.createServer(app);
+            
+            // Initialize socket.io
+            io = require('socket.io')(server, {
+                cors: {
+                    origin: '*',
+                }
+            });
+            
+            // Configure Cloudinary
+            const cloudinary = require('cloudinary').v2;
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET
+            });
+            
+            // Setup socket server
+            const { setupSocketServer } = require('./socket/socketServer');
+            setupSocketServer(io);
+            
+            const PORT = process.env.PORT || 3000;
+            server.listen(PORT, () => {
+                console.log(`Server is running on port ${PORT}`);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
 
-
-// Start server
-if(process.env.NODE_ENV !== "production"){
-    const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
+// Start server in development
+if (process.env.NODE_ENV !== "production") {
+    startServer();
 }
 
-// Export server for vercel
+// Export for Vercel serverless functions
+module.exports = app;

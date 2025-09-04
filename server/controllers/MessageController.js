@@ -29,8 +29,8 @@ const getUserForSidebar = async (req, res) => {
 // Get all messages for selected user
 const getMessages = async (req, res) => {
     try {
-        console.log('Request params:', req.params);
-        console.log('User ID:', req.user?._id);
+        // console.log('Request params:', req.params);
+        // console.log('User ID:', req.user?._id);
         
         const { id: selectedUserId } = req.params;
         const myId = req.user?._id;
@@ -56,7 +56,7 @@ const getMessages = async (req, res) => {
         .sort({ createdAt: 1 })
         .lean();
 
-        console.log('Found messages:', messages.length);
+        // console.log('Found messages:', messages.length);
 
         try {
             await Message.updateMany(
@@ -109,22 +109,22 @@ const markMessageAsSeen = async (req, res) => {
 // Send message to selected user
 const sendMessage = async (req, res) => {
     try {
-        console.log('=== SEND MESSAGE REQUEST ===');
-        console.log('Headers:', req.headers);
-        console.log('Body:', req.body);
-        console.log('Params:', req.params);
-        console.log('User:', req.user);
+        // console.log('=== SEND MESSAGE REQUEST ===');
+        // console.log('Headers:', req.headers);
+        // console.log('Body:', req.body);
+        // console.log('Params:', req.params);
+        // console.log('User:', req.user);
         
         const { text, image } = req.body || {};
         const senderId = req.user?._id;
         const receiverId = req.params?.id;
         
-        console.log('Extracted values:', { 
-            text, 
-            hasImage: !!image, 
-            senderId, 
-            receiverId 
-        });
+        // console.log('Extracted values:', { 
+        //     text, 
+        //     hasImage: !!image, 
+        //     senderId, 
+        //     receiverId 
+        // });
         
         if (!senderId) {
             console.error('No sender ID in request user:', req.user);
@@ -182,7 +182,7 @@ const sendMessage = async (req, res) => {
             }
         }
 
-        console.log('Creating message with:', { senderId, receiverId, text, imageUrl });
+        // console.log('Creating message with:', { senderId, receiverId, text, imageUrl });
         
         let newMessage;
         try {
@@ -192,7 +192,7 @@ const sendMessage = async (req, res) => {
                 text: text || '',
                 image: imageUrl || undefined
             });
-            console.log('Message created:', newMessage);
+            // console.log('Message created:', newMessage);
         } catch (createError) {
             console.error('Error creating message:', createError);
             return res.status(500).json({ 
@@ -207,7 +207,7 @@ const sendMessage = async (req, res) => {
             newMessage = await Message.findById(newMessage._id)
                 .populate('senderId', 'fullName profilePic')
                 .populate('receiverId', 'fullName profilePic');
-            console.log('Populated message:', newMessage);
+            // console.log('Populated message:', newMessage);
         } catch (populateError) {
             console.error('Error populating message:', populateError);
             // Continue with unpopulated message rather than failing
@@ -221,21 +221,21 @@ const sendMessage = async (req, res) => {
             const senderSocketId = userSocketMap[newMessage.senderId._id || newMessage.senderId];
             
             if (receiverSocketId) {
-                console.log('Emitting newMessage to receiver socket:', receiverSocketId);
+                // console.log('Emitting newMessage to receiver socket:', receiverSocketId);
                 io.to(receiverSocketId).emit("newMessage", newMessage);
             }
             
             // Also emit to sender for UI update if different from receiver
             if (senderSocketId && senderSocketId !== receiverSocketId) {
-                console.log('Emitting newMessage to sender socket:', senderSocketId);
+                // console.log('Emitting newMessage to sender socket:', senderSocketId);
                 io.to(senderSocketId).emit("newMessage", newMessage);
             }
             
             if (!receiverSocketId && !senderSocketId) {
-                console.log('No active sockets found for message delivery:', { 
-                    receiverId,
-                    senderId: newMessage.senderId._id || newMessage.senderId
-                });
+                // console.log('No active sockets found for message delivery:', { 
+                //     receiverId,
+                //     senderId: newMessage.senderId._id || newMessage.senderId
+                // });
             }
         } catch (socketError) {
             console.error('Error in socket emission:', socketError);
